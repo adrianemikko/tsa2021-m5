@@ -43,6 +43,10 @@ pd.set_option('precision', 2)
 ###############
 
 def timeSeriesFiltering(ts, lower=np.NINF, upper=np.inf, plot=False):
+    """
+    Replace values lower than `lower` and higher that `upper
+    with interpolated values.
+    """
     if plot:
         fig, axes = plt.subplots(figsize=(12, 5), nrows=2, sharex=True)
         ts.plot(ax=axes[0], title='Original', c='k')
@@ -80,8 +84,6 @@ def mslt(ts, s=[12], plot=False):
 
 
 
-
-
 def rateMyForecast(train, test, forecast):
     """
     Evalute the forcast per group, given train, test, and forecast tables.
@@ -93,9 +95,9 @@ def rateMyForecast(train, test, forecast):
     train : DataFrame
         DataFrame contaning the train set.
     test : DataFrame
-        DataFrame contaning the train set.
+        DataFrame contaning the test set.
     forecast : DataFrame
-        DataFrame contaning the train set.
+        DataFrame contaning the forecast set.
 
     Returns
     -------
