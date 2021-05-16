@@ -1,7 +1,7 @@
 # Authors
 # * Adriane Mikko A. Amorado
 # * Nika Karen O. Espiritu
-# * Joanna Mariebeth G. Quinto
+# * Joanna Bebe G. Quinto
 
 #############
 ## Imports ##
@@ -107,8 +107,10 @@ def rmsse(y_true, y_pred, ts):
     if len(y_true) != len(y_pred):
         raise ValueError('Lengths Mismatch')
     ts = ts.to_numpy()
-    score = np.sqrt(np.mean((y_true - y_pred)**2)/np.mean((ts[1:] - ts[:-1])**2))
+    score = np.sqrt(
+        np.mean((y_true - y_pred)**2)/np.mean((ts[1:] - ts[:-1])**2))
     return score
+
 
 def rateMyForecast(train, test, forecast):
     """
