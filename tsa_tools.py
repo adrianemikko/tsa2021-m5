@@ -16,7 +16,8 @@ from matplotlib import pyplot as plt
 from IPython.display import display
 from itertools import product
 from datetime import datetime
-from tsa_functions import *
+from tsa_benchmarks import *
+from tsa_metrics import *
 import lightgbm as lgb
 import seaborn as sns
 import pandas as pd
@@ -78,38 +79,7 @@ def mslt(ts, s=[12], plot=False):
     return res
 
 
-#####################################
-##             Metrics             ##
-#####################################
 
-def mae(y_true, y_pred):
-    score = np.mean(np.abs(y_true - y_pred))
-    return score
-
-
-def rmse(y_true, y_pred):
-    if len(y_true) != len(y_pred):
-        raise ValueError('Lengths Mismatch')
-    score = np.sqrt(np.mean((y_true - y_pred)**2))
-    return score
-
-
-def mase(y_true, y_pred, s_ts):
-    if len(y_true) != len(y_pred):
-        raise ValueError('Lengths Mismatch')
-    ts = s_ts.to_numpy()
-    score = np.mean(
-        np.abs((y_true - y_pred)/np.mean(np.abs(ts[1:] - ts[:-1]))))
-    return score
-
-
-def rmsse(y_true, y_pred, ts):
-    if len(y_true) != len(y_pred):
-        raise ValueError('Lengths Mismatch')
-    ts = ts.to_numpy()
-    score = np.sqrt(
-        np.mean((y_true - y_pred)**2)/np.mean((ts[1:] - ts[:-1])**2))
-    return score
 
 
 def rateMyForecast(train, test, forecast):
