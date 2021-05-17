@@ -252,25 +252,25 @@ def forecastUsingConfig(est, regions, design_set, test_set):
 class ensemble1:
     def __init__(self, w, s):
         self.w = w
-        self.s = s=[7, 30, 365]
-    
+        self.s = s = [7, 30, 365]
+
     def fit(self, ts, lower=np.NINF, upper=np.inf, ):
         series = timeSeriesFiltering(ts, lower, upper)
         self.res = mslt(series, s=self.s)
-        
+
         # Seasonal
-        
+
         # Trend
         self.trend_fit = ETSModel(self.res.Trend, trend='add').fit()
-        
+
         # Residuals
         X_train, _, y_train, _ = TimeseriesGenerator(
             self.res.Remainder, y=None, w=self.w, h=1)
         resid_model = lgb.LGBMRegressor(random_state=1)
         self.resid_fit = resid_model.fit(X_train, y_train)
-        
+
         return self
-    
+
     def forecast(self, h):
         forecasts = {'Data': np.nan}
         forecasts['Trend'] = self.trend_fit.forecast(h)

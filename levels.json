@@ -1,0 +1,14 @@
+{
+    "1": null,
+    "2": "state_id",
+    "3": "store_id",
+    "4": "cat_id",
+    "5": "dept_id",
+    "6": ["state_id", "cat_id"],
+    "7": ["state_id", "dept_id"],
+    "8": ["store_id", "cat_id"],
+    "9": ["store_id", "dept_id"],
+    "10": "item_id",
+    "11": ["state_id", "item_id"],
+    "12": ["store_id", "item_id"]
+}
