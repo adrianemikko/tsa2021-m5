@@ -1,7 +1,8 @@
 #####################################
 ##             Metrics             ##
 #####################################
-import numpy as np 
+import numpy as np
+
 
 def mae(y_true, y_pred):
     score = np.mean(np.abs(y_true - y_pred))
@@ -39,5 +40,6 @@ def mape(y_true, y_pred):
 
 
 def mase_sea(y_true, y_pred, ts, m):
-    score = np.mean(np.abs((y_true - y_pred)/np.mean(np.abs(ts[m:] - ts[:-m]))))
+    score = np.mean(
+        np.abs((y_true - y_pred)/np.mean(np.abs(ts[m:] - ts[:-m]))))
     return score

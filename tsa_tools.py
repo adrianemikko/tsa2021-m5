@@ -28,12 +28,13 @@ import pickle
 import tqdm
 import json
 
-
 warnings.filterwarnings("ignore")
+
 register_matplotlib_converters()
 sns.set_style('darkgrid')
-np.set_printoptions(precision=2)
-pd.set_option('precision', 2)
+
+np.set_printoptions(precision=4)
+pd.set_option('precision', 4)
 # pd.set_option('display.max_columns', None)
 # pd.set_option('display.max_rows', None)
 # pd.set_option('display.max_colwidth', None)
