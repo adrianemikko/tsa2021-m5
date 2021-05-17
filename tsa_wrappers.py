@@ -3,16 +3,14 @@
 ######################################
 import numpy as np
 
-class TSAFuncModel:
+
+class TSABenchmarkModel:
     def __init__(self, func, **kwargs):
-        self.func=func
-        self.params=params
+        self.func = func
+        self.kwargs = kwargs
 
+    def fit(self, ts):
+        self.ts = ts
 
-
-
-naiveMOdel = TSAFuncModel(naive)
-
-naiveMOdel.fit(ts)
-
-naiveMOdel.forecast(28)
+    def forecast(self, h):
+        return self.func(self.ts, h, **self.kwargs)
