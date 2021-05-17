@@ -7,6 +7,7 @@
 ## Imports ##
 #############
 from pandas.core.frame import DataFrame
+from pandas.core.series import Series
 from tensorflow.keras.preprocessing import timeseries_dataset_from_array
 from sklearn.multioutput import MultiOutputRegressor, RegressorChain
 from pandas.plotting import register_matplotlib_converters
@@ -19,6 +20,7 @@ from itertools import product
 from datetime import datetime
 from tsa_benchmarks import *
 from tsa_metrics import *
+from tsa_wrappers import *
 import lightgbm as lgb
 import seaborn as sns
 import pandas as pd
@@ -44,10 +46,19 @@ pd.set_option('precision', 4)
 ## Functions ##
 ###############
 
-def timeSeriesFiltering(ts, lower=np.NINF, upper=np.inf, plot=False):
+def timeSeriesFiltering(
+    ts: Series,
+    lower: float = np.NINF,
+    upper: float = np.inf,
+    plot: bool = False) -> Series:
     """
-    Replace values lower than `lower` and higher that `upper
+    Replace values less than `lower` and more that `upper`
     with interpolated values.
+
+    If `ts` ends or starts with filtered values,
+    uses `ffill` or `bfill` respectively
+
+    Can plot the differences.
     """
     if plot:
         fig, axes = plt.subplots(figsize=(12, 5), nrows=2, sharex=True)
@@ -57,7 +68,10 @@ def timeSeriesFiltering(ts, lower=np.NINF, upper=np.inf, plot=False):
 
     ts = (ts
           .where((ts >= lower) & (ts <= upper))
-          .interpolate(method='time'))
+          .interpolate(method='time')
+          .ffill()
+          .bfill()
+          )
 
     if plot:
         ts.plot(ax=axes[1], title='Interpolated', c='k')
@@ -123,6 +137,9 @@ def rateMyForecast(train: DataFrame, test: DataFrame, forecast: DataFrame) -> Da
 #############################################
 
 def TimeseriesGenerator(X, y, w, h):
+    """
+
+    """
     X_train = np.vstack(timeseries_dataset_from_array(
         X, targets=None, sequence_length=w, end_index=len(X)-h))
     y_train = np.vstack(timeseries_dataset_from_array(
