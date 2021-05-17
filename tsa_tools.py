@@ -6,6 +6,7 @@
 #############
 ## Imports ##
 #############
+from pandas.core.frame import DataFrame
 from tensorflow.keras.preprocessing import timeseries_dataset_from_array
 from sklearn.multioutput import MultiOutputRegressor, RegressorChain
 from pandas.plotting import register_matplotlib_converters
@@ -83,8 +84,7 @@ def mslt(ts, s=[12], plot=False):
     return res
 
 
-
-def rateMyForecast(train, test, forecast):
+def rateMyForecast(train: DataFrame, test: DataFrame, forecast: DataFrame) -> DataFrame:
     """
     Evalute the forcast per group, given train, test, and forecast tables.
 
