@@ -10,6 +10,9 @@ from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 from tensorflow.keras.preprocessing import timeseries_dataset_from_array
 from sklearn.multioutput import MultiOutputRegressor, RegressorChain
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import Pipeline
+from sklearn.compose import TransformedTargetRegressor
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel
 from statsmodels.tsa.seasonal import STL
@@ -134,24 +137,57 @@ def rateMyForecast(
     return res.set_index('Group')
 
 
+class EndogenousTransformer(BaseEstimator, TransformerMixin):
+    """
+    Transform a univariate `X` into `X_train` of leght `w` and 
+    `y_train` of length `h`. The total no. of data points will be:
+    >>> len(X) - w - h + 1
+    """
+    def __init__(self, w: int, h: int) -> None:
+        self.w = w
+        self.h = h
+
+    def fit(self, X, y=None):
+        self.X = X
+        self.y = y
+        return self
+
+    def transform(self, X, y=None):
+        X_train, _, y_train, _ = TimeseriesGenerator(
+            self.X, self.y, self.w, self.h)
+        return X_train, y_train
+
+
 #############################################
 ##             Model Selection             ##
 #############################################
 
 def TimeseriesGenerator(X, y, w, h):
     """
+    Returns `X_train`, `X_test`, `y_train`, and `y_test` from a given 
+    endog features `X` and `y`; this assumes that the given `y` is of
+    lenth `h`, and that there is only a singular pair of `X` and `y`
+    in the test set.
 
+    This is originally used in creating train/test set from the CV splits
+    which outputs univariate `X` and `y` that can be used in `statsmodels`.
+    However this can be repurposed to only output the training set by:
+    >>> X_train, _, y_train, _ = TimeseriesGenerator(X, y=None)
     """
     X_train = np.vstack(timeseries_dataset_from_array(
         X, targets=None, sequence_length=w, end_index=len(X)-h))
     y_train = np.vstack(timeseries_dataset_from_array(
         X, targets=None, sequence_length=h, start_index=w))
     X_test = X[None, -w:]
-    y_test = y[None, :] if y else None
+    y_test = y[None, :] if y is not None else None
     return X_train, X_test, y_train, y_test
 
 
 def cross_val_score(X, est, config, scoring, cv):
+    """
+    Splits `X` using `cv` and predicts using `est` with `config` params.
+    The output will be scored based on `scoring`.
+    """
     param = config.copy()
     h = param.pop('h')
     w = param.pop('w')
