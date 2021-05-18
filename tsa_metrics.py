@@ -35,11 +35,15 @@ def rmsse(y_true, y_pred, ts):
 
 
 def mape(y_true, y_pred):
+    if len(y_true) != len(y_pred):
+        raise ValueError('Lengths Mismatch')
     score = np.mean(np.abs((y_true - y_pred)/y_true))
     return score
 
 
 def mase_sea(y_true, y_pred, ts, m):
+    if len(y_true) != len(y_pred):
+        raise ValueError('Lengths Mismatch')
     score = np.mean(
         np.abs((y_true - y_pred)/np.mean(np.abs(ts[m:] - ts[:-m]))))
     return score
