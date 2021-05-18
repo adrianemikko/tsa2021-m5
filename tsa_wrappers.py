@@ -1,15 +1,16 @@
 ######################################
 ##             Wrappers             ##
 ######################################
+from typing import Callable
 from pandas.core.series import Series
 
 
 class BaseFuncModel:
-    def __init__(self, func: function, **kwargs) -> None:
+    def __init__(self, func: Callable, **kwargs) -> None:
         self.func = func
         self.kwargs = kwargs
 
-    def fit(self, ts: Series) -> BaseFuncModel:
+    def fit(self, ts: Series) -> None:
         self.ts = ts
         return self
 
@@ -22,9 +23,9 @@ class StatsModelsWrapper:
         self.model = model
         self.kwargs = kwargs
 
-    def fit(self, ts: Series) -> StatsModelsWrapper:
-        self.model.fit(ts, **self.kwargs)
+    def fit(self, ts: Series) -> None:
+        self.fitted_model = self.model(ts, **self.kwargs).fit()
         return self
 
     def forecast(self, h: int) -> Series:
-        return self.model.forecast(h)
+        return self.fitted_model.forecast(h)

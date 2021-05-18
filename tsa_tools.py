@@ -47,10 +47,10 @@ pd.set_option('precision', 4)
 ###############
 
 def timeSeriesFiltering(
-    ts: Series,
-    lower: float = np.NINF,
-    upper: float = np.inf,
-    plot: bool = False) -> Series:
+        ts: Series,
+        lower: float = np.NINF,
+        upper: float = np.inf,
+        plot: bool = False) -> Series:
     """
     Replace values less than `lower` and more that `upper`
     with interpolated values.
@@ -99,7 +99,10 @@ def mslt(ts, s=[12], plot=False):
     return res
 
 
-def rateMyForecast(train: DataFrame, test: DataFrame, forecast: DataFrame) -> DataFrame:
+def rateMyForecast(
+        train: DataFrame,
+        test: DataFrame,
+        forecast: DataFrame) -> DataFrame:
     """
     Evalute the forcast per group, given train, test, and forecast tables.
 
@@ -123,12 +126,11 @@ def rateMyForecast(train: DataFrame, test: DataFrame, forecast: DataFrame) -> Da
     """
     res = pd.DataFrame([
         {'Group': col,
-         'RMSE': rmse(test[col], forecast[col]),
-         'MAE': mae(test[col], forecast[col]),
-         'MASE': mase(test[col], forecast[col], train[col]),
-         'RMSSE': rmsse(test[col], forecast[col], train[col])}
+         'RMSE': rmse(np.array(test[col]), np.array(forecast[col])),
+         'MAE': mae(np.array(test[col]), np.array(forecast[col])),
+         'MASE': mase(np.array(test[col]), np.array(forecast[col]), np.array(train[col])),
+         'RMSSE': rmsse(np.array(test[col]), np.array(forecast[col]), np.array(train[col]))}
         for col in test])
-    display(res.set_index('Group'))
     return res.set_index('Group')
 
 
