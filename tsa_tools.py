@@ -134,6 +134,61 @@ def rateMyForecast(
     return res.set_index('Group')
 
 
+def compute_bottomup(df_orig, df_pred, lvl_pred):
+    """Pre-processes the original data by level and returns 
+    a dictionary of RMSSEs for each time series in each level.
+    
+    Parameters
+    ----------
+    df_orig : DataFrame
+        DataFrame contaning the original data (index=date, columns=hts).
+    df_pred : DataFrame
+        DataFrame contaning the predictions using best model (index=date, columns=hts).
+    lvl_pred : int
+        Specified hierarchical level of the df_pred.
+
+    Returns
+    -------
+    res_bylvl : DataFrame
+        Nested dictionary of RMSSEs per time series per level
+    """
+
+    res_bylvl = {}
+    lvl_preds = list(sorted(range(2, lvl_pred), reverse=True))
+    for x in list(sorted(range(1, lvl_pred), reverse=True)):
+        if x in lvl_preds:
+            orig = (df_orig.sum(level=[levels[str(x)]], axis=1)
+                    .apply(lambda x: np.where(x < 10,  np.nan, x))
+                    .interpolate(method='linear', axis=0)
+                    .fillna(method='bfill'))
+            pred = df_pred.sum(level=[levels[str(x)]], axis=1)
+                    
+
+        else:
+            orig = (df_orig.sum(level=levels[str(x)], axis=1)
+                    .apply(lambda x: np.where(x < 10,  np.nan, x))
+                    .interpolate(method='linear', axis=0)
+                    .fillna(method='bfill'))
+            pred = df_pred.sum(level=levels[str(x)], axis=1)
+        
+        # Test and Train Split
+        train = orig.iloc[ :1913,]
+        test = orig.iloc[ 1913:,]
+        
+        # Initialize res dictionary by column
+        res_bycol = {} 
+
+        if x in lvl_preds:
+            for col in orig.columns:
+                res_bycol[col] = rmsse(test[col], pred[col], train[col])
+        else:
+            res_bycol['Total'] = rmsse(test, pred, train)
+
+        res_bylvl[x] = res_bycol 
+        
+    return res_bylvl
+
+
 #############################################
 ##             Model Selection             ##
 #############################################
