@@ -158,6 +158,58 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
         res_bylvl[x] = res_bycol 
         
     return res_bylvl
+    
+
+def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
+    """Pre-processes the original data by level and returns 
+    a dictionary of RMSSEs for each time series in each level.
+    
+    Parameters
+    ----------
+    df_orig : DataFrame
+        DataFrame contaning the original data (index=date, columns=hts).
+    df_pred : DataFrame
+        DataFrame contaning the predictions using best model (index=date, columns=hts).
+    lvl_pred : int
+        Specified hierarchical level of the df_pred.
+
+    Returns
+    -------
+    res_bylvl : DataFrame
+        Nested dictionary of RMSSEs per time series per level
+    """
+    levels1 = json.loads(open('levels1.json', 'r').read())
+    lvl_preds = list(levels1.keys())[9:]
+    
+    if approach == 'AHP':
+        res_bylvl = {}
+        forc_bylvl = {}
+
+        for x in tqdm.tqdm(lvl_preds):
+            propors = {}
+            next_lvl_forc = {}
+            res_bycol = {}
+
+            lvl = (full_df.sum(level=levels1[x], axis=1)
+                   .apply(lambda x: np.where(x < 10,  np.nan, x))
+                   .interpolate(method='linear', axis=0)
+                   .fillna(method='bfill'))
+
+            # Test and Train Split
+            train = lvl.iloc[ :1913,]
+            test = lvl.iloc[ 1913:,]
+     
+            for col in tqdm.tqdm(lvl.columns.tolist()):
+                propors[col] = sum(lvl[col]/lvl.sum(axis=1)) * (1/len(lvl))
+                next_lvl_forc[col] = (sample.sum(axis=1) * propors[col])
+                res_bycol[col] = (rmsse(test[col], 
+                                  next_lvl_forc[col], 
+                                  train[col]))
+            
+            forc_bylvl[x] = next_lvl_forc
+            res_bylvl[x] = res_bycol 
+
+    return res_bylvl
 
 
 #############################################
