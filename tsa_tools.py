@@ -217,7 +217,11 @@ class EndogenousTransformer(BaseEstimator, TransformerMixin):
         return X_train, y_train
 
 
-def TimeseriesGenerator(X, y, w, h):
+def TimeseriesGenerator(
+    X: Series,
+    y: Series,
+    w: int,
+    h: int):
     """
     Returns `X_train`, `X_test`, `y_train`, and `y_test` from a given 
     endog features `X` and `y`; this assumes that the given `y` is of
@@ -234,7 +238,7 @@ def TimeseriesGenerator(X, y, w, h):
     y_train = np.vstack(timeseries_dataset_from_array(
         X, targets=None, sequence_length=h, start_index=w))
     X_test = X[None, -w:]
-    y_test = y[None, :] if y else None
+    y_test = y[None, :] if y is not None else None
     return X_train, X_test, y_train, y_test
 
 
