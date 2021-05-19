@@ -2,7 +2,10 @@
 ##             Wrappers             ##
 ######################################
 from typing import Callable
+import pandas as pd
+import numpy as np
 from pandas.core.series import Series
+from tsa_preprocessing import TimeseriesGenerator
 
 
 class BaseFuncModel:
@@ -29,3 +32,24 @@ class StatsModelsWrapper:
 
     def forecast(self, h: int) -> Series:
         return self.fitted_model.forecast(h)
+
+
+class RecursiveRegressor:
+    def __init__(self, estimator) -> None:
+        self.estimator = estimator
+        self.__dict__.update(estimator.get_params())
+
+    def fit(self, X: Series, y: Series):
+        X_train, _, y_train, _ = TimeseriesGenerator(
+            y, None, self.w, h=1)
+        self.fitted_model = self.estimator.fit(X_train, y_train)
+        return self
+
+    def predict(self, X: Series):
+        forecasts = []
+        X_train = list(X)
+        for _ in range(self.h):
+            y_pred = self.fitted_model.predict([X_train[-self.w:]])
+            forecasts.extend(y_pred)
+            X_train.extend(y_pred)
+        return pd.Series(forecasts, index=X.index, name=X.name)
