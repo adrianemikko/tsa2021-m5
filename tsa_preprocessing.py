@@ -1,6 +1,10 @@
 ###########################################
 ##             Preprocessing             ##
 ###########################################
+import numpy as np
+from pandas.core.series import Series
+from tensorflow.keras.preprocessing import timeseries_dataset_from_array
+
 
 def timeSeriesFiltering(
         ts: Series,
