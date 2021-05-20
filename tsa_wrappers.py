@@ -4,6 +4,7 @@
 from typing import Callable
 import pandas as pd
 import numpy as np
+from IPython.display import clear_output
 from pandas.core.series import Series
 from tsa_preprocessing import TimeseriesGenerator
 
@@ -43,6 +44,7 @@ class RecursiveRegressor:
         X_train, _, y_train, _ = TimeseriesGenerator(
             y, None, self.w, h=1)
         self.fitted_model = self.estimator.fit(X_train, y_train)
+        clear_output()
         return self
 
     def predict(self, X: Series):
@@ -52,4 +54,4 @@ class RecursiveRegressor:
             y_pred = self.fitted_model.predict([X_train[-self.w:]])
             forecasts.extend(y_pred)
             X_train.extend(y_pred)
-        return pd.Series(forecasts, index=X.index, name=X.name)
+        return pd.Series(forecasts)

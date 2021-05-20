@@ -16,7 +16,7 @@ from sklearn.compose import TransformedTargetRegressor
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel
 from statsmodels.tsa.seasonal import STL
-from IPython.display import clear_output
+from IPython.display import display
 from matplotlib import pyplot as plt
 from IPython.display import display
 from itertools import product
@@ -241,15 +241,16 @@ class EndogenousTransformer(BaseEstimator, TransformerMixin):
         self.reshape = reshape
 
     def fit(self, X, y=None):
-        print(X.shape)
-        self.X = X if not self.reshape else X.reshape(-1)
+        self.X = X if not self.reshape else np.array(X).reshape(-1)
+        print(self.X.shape)
         self.y = y
         return self
 
     def transform(self, X, y=None):
-        print(X.shape)
+        print(self.X.shape)
         X_train, _, y_train, _ = TimeseriesGenerator(
             self.X, self.y, self.w, self.h)
+        print(y_train.shape)
         if self.return_X and self.return_y:
             return X_train, y_train
         elif self.return_X:
@@ -259,6 +260,8 @@ class EndogenousTransformer(BaseEstimator, TransformerMixin):
         else:
             raise ValueError
 
+    def inverse_transform(self, X):
+        return X.flaten()
 
 
 def cross_val_score(X, est, config, scoring, cv):
