@@ -128,19 +128,11 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
     lvl_preds = list(sorted(range(2, lvl_pred), reverse=True))
     for x in list(sorted(range(1, lvl_pred), reverse=True)):
         if x in lvl_preds:
-            orig = (df_orig.sum(level=[levels[str(x)]], axis=1)
-                    .apply(lambda x: np.where(x < 10,  np.nan, x))
-                    .interpolate(method='linear', axis=0)
-                    .fillna(method='bfill'))
-            pred = df_pred.sum(level=[levels[str(x)]], axis=1)
-                    
-
+            orig = df_orig.sum(level=[levels1[str(x)]], axis=1)
+            pred = df_pred.sum(level=[levels1[str(x)]], axis=1)
         else:
-            orig = (df_orig.sum(level=levels[str(x)], axis=1)
-                    .apply(lambda x: np.where(x < 10,  np.nan, x))
-                    .interpolate(method='linear', axis=0)
-                    .fillna(method='bfill'))
-            pred = df_pred.sum(level=levels[str(x)], axis=1)
+            orig = df_orig.sum(level=levels1[str(x)], axis=1)
+            pred = df_pred.sum(level=levels1[str(x)], axis=1)
         
         # Test and Train Split
         train = orig.iloc[ :1913,]
@@ -158,6 +150,7 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
         res_bylvl[x] = res_bycol 
         
     return res_bylvl
+
     
 
 def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
@@ -180,6 +173,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
     """
     levels1 = json.loads(open('levels1.json', 'r').read())
     lvl_preds = list(levels1.keys())[9:]
+    ldf_pred_tot = df_pred.sum(axis=1)
     
     if approach == 'AHP':
         res_bylvl = {}
@@ -190,10 +184,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
             next_lvl_forc = {}
             res_bycol = {}
 
-            lvl = (full_df.sum(level=levels1[x], axis=1)
-                   .apply(lambda x: np.where(x < 10,  np.nan, x))
-                   .interpolate(method='linear', axis=0)
-                   .fillna(method='bfill'))
+            lvl = full_df.sum(level=levels1[x], axis=1)
 
             # Test and Train Split
             train = lvl.iloc[ :1913,]
@@ -201,7 +192,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
      
             for col in tqdm.tqdm(lvl.columns.tolist()):
                 propors[col] = sum(lvl[col]/lvl.sum(axis=1)) * (1/len(lvl))
-                next_lvl_forc[col] = (sample.sum(axis=1) * propors[col])
+                next_lvl_forc[col] = ldf_pred_tot * propors[col])
                 res_bycol[col] = (rmsse(test[col], 
                                   next_lvl_forc[col], 
                                   train[col]))
