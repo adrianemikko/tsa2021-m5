@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from pandas.core.series import Series
 from tsa_preprocessing import TimeseriesGenerator
+from IPython.display import clear_output
 
 
 class BaseFuncModel:
@@ -61,6 +62,7 @@ class RecursiveRegressor:
         X_train, _, y_train, _ = TimeseriesGenerator(
             y, None, self.w, h=1)
         self.fitted_model = self.estimator.fit(X_train, y_train)
+        clear_output()
         return self
 
     def predict(self, X: Series):
