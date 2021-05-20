@@ -221,20 +221,43 @@ class EndogenousTransformer(BaseEstimator, TransformerMixin):
     Transform a univariate `X` into `X_train` of leght `w` and 
     `y_train` of length `h`. The total no. of data points will be:
     >>> len(X) - w - h + 1
+
+    By default returns X, and y but can be configured to return 
+    only `X` or `y`.
+
+    This runs on `TimeseriesGenerator` backend.
     """
-    def __init__(self, w: int, h: int) -> None:
+    def __init__(
+        self, w: int,
+        h: int,
+        return_X: bool = True,
+        return_y: bool = True,
+        reshape: bool = False) -> None:
+        """Initializes the transformer"""
         self.w = w
         self.h = h
+        self.return_X = return_X
+        self.return_y = return_y
+        self.reshape = reshape
 
     def fit(self, X, y=None):
-        self.X = X
+        print(X.shape)
+        self.X = X if not self.reshape else X.reshape(-1)
         self.y = y
         return self
 
     def transform(self, X, y=None):
+        print(X.shape)
         X_train, _, y_train, _ = TimeseriesGenerator(
             self.X, self.y, self.w, self.h)
-        return X_train, y_train
+        if self.return_X and self.return_y:
+            return X_train, y_train
+        elif self.return_X:
+            return X_train
+        elif self.return_y:
+            return y_train
+        else:
+            raise ValueError
 
 
 
