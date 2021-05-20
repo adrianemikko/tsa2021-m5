@@ -16,8 +16,9 @@ from sklearn.compose import TransformedTargetRegressor
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel
 from statsmodels.tsa.seasonal import STL
-from IPython.display import display
+from IPython.display import clear_output
 from matplotlib import pyplot as plt
+from IPython.display import display
 from itertools import product
 from datetime import datetime
 from tsa_benchmarks import *
