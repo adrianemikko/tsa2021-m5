@@ -234,15 +234,18 @@ class EndogenousTransformer(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         self.X = X if not self.reshape else np.array(X).reshape(-1)
-        print(self.X.shape)
+        # print('fitting', self.X.shape, (self.return_X, self.return_y))
         self.y = y
         return self
 
     def transform(self, X, y=None):
-        print(self.X.shape)
+        self.X = X if not self.reshape else np.array(X).reshape(-1)
+        # print('transforming', ((X, len(X)) if isinstance(X, list) else self.X.shape), (self.return_X, self.return_y))
+        if len(self.X) == self.w:
+            return np.array([self.X])
         X_train, _, y_train, _ = TimeseriesGenerator(
             self.X, self.y, self.w, self.h)
-        print(y_train.shape)
+        # print('into', y_train.shape, (self.return_X, self.return_y))
         if self.return_X and self.return_y:
             return X_train, y_train
         elif self.return_X:
@@ -253,7 +256,7 @@ class EndogenousTransformer(BaseEstimator, TransformerMixin):
             raise ValueError
 
     def inverse_transform(self, X):
-        return X.flaten()
+        return X.flatten()
 
 
 def cross_val_score(X, est, config, scoring, cv):
@@ -319,7 +322,7 @@ class TimeSeriesSplit:
         return dataset[::-1]
 
 
-class GridSearchCV:
+class GridSearch:
     def __init__(self, estimator, param_grid, cv, scoring=[]):
         self.est = estimator
         self.param_grid = param_grid
