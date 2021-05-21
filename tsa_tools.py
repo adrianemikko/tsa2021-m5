@@ -185,7 +185,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
             next_lvl_forc = {}
             res_bycol = {}
 
-            lvl = full_df.sum(level=levels[x], axis=1)
+            lvl = df_full.sum(level=levels[x], axis=1)
 
             # Test and Train Split
             train = lvl.iloc[ :1913,]
