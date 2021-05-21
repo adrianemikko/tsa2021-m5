@@ -13,6 +13,7 @@ from sklearn.multioutput import MultiOutputRegressor, RegressorChain
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel
 from statsmodels.tsa.seasonal import STL
@@ -108,7 +109,7 @@ def rateMyForecast(
 def compute_bottomup(df_orig, df_pred, lvl_pred):
     """Pre-processes the original data by level and returns 
     a dictionary of RMSSEs for each time series in each level.
-    
+
     Parameters
     ----------
     df_orig : DataFrame
@@ -134,13 +135,13 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
         else:
             orig = df_orig.sum(level=levels[str(x)], axis=1)
             pred = df_pred.sum(level=levels[str(x)], axis=1)
-        
+
         # Test and Train Split
-        train = orig.iloc[ :1913,]
-        test = orig.iloc[1913:,]
-        
+        train = orig.iloc[:1913, ]
+        test = orig.iloc[1913:, ]
+
         # Initialize res dictionary by column
-        res_bycol = {} 
+        res_bycol = {}
 
         if x in lvl_preds:
             for col in orig.columns:
@@ -148,16 +149,15 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
         else:
             res_bycol['Total'] = rmsse(test, pred, train)
 
-        res_bylvl[x] = res_bycol 
-        
+        res_bylvl[x] = res_bycol
+
     return res_bylvl
 
-    
 
 def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
     """Pre-processes the original data by level and returns 
     a dictionary of RMSSEs for each time series in each level.
-    
+
     Parameters
     ----------
     df_orig : DataFrame
@@ -175,7 +175,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
     levels = json.loads(open('levels.json', 'r').read())
     lvl_preds = list(levels.keys())[9:]
     ldf_pred_tot = df_pred.sum(axis=1)
-    
+
     if approach == 'AHP':
         res_bylvl = {}
         forc_bylvl = {}
@@ -188,18 +188,18 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
             lvl = df_full.sum(level=levels[x], axis=1)
 
             # Test and Train Split
-            train = lvl.iloc[ :1913,]
-            test = lvl.iloc[ 1913:,]
-     
+            train = lvl.iloc[:1913, ]
+            test = lvl.iloc[1913:, ]
+
             for col in tqdm.tqdm(lvl.columns.tolist()):
                 propors[col] = sum(lvl[col]/lvl.sum(axis=1)) * (1/len(lvl))
                 next_lvl_forc[col] = ldf_pred_tot * propors[col]
-                res_bycol[col] = (rmsse(test[col], 
-                                  next_lvl_forc[col], 
+                res_bycol[col] = (rmsse(test[col],
+                                  next_lvl_forc[col],
                                   train[col]))
-            
+
             forc_bylvl[x] = next_lvl_forc
-            res_bylvl[x] = res_bycol 
+            res_bylvl[x] = res_bycol
 
     return res_bylvl
 
@@ -219,12 +219,13 @@ class EndogenousTransformer(BaseEstimator, TransformerMixin):
 
     This runs on `TimeseriesGenerator` backend.
     """
+
     def __init__(
-        self, w: int,
-        h: int,
-        return_X: bool = True,
-        return_y: bool = True,
-        reshape: bool = False) -> None:
+            self, w: int,
+            h: int,
+            return_X: bool = True,
+            return_y: bool = True,
+            reshape: bool = False) -> None:
         """Initializes the transformer"""
         self.w = w
         self.h = h
@@ -305,7 +306,7 @@ def cross_val_predict(X, est, config, cv):
     return res
 
 
-class TimeSeriesSplit:
+class OverlappingTimeSeriesSplit:
     def __init__(self, val_size):
         self.val_size = val_size
 
@@ -360,6 +361,75 @@ class GridSearch:
         self.df = pd.DataFrame(self.df_records_)
 
 
+def evaluate_methods(
+        methods: dict,
+        X: Series,
+        XOG: Series,
+        tscv,
+        col,
+        w: int,
+        h: int) -> dict:
+    """
+    Evaluates the different forecasting methods defined in a dict:
+    >>> methods = {
+    ...     str(method_name): {
+    ...         `meta`: 'base' | 'stat' | 'ml_recursive' | 'ml_direct',
+    ...         `model`: model
+    ...     }
+    ... }
+
+    Parameters
+    ----------
+    methods: dict
+        A dict containing information about the methods and an instance
+        of each.
+    X: Series
+        Training set which may or may not be pre-processed
+    XOG: Series
+        Test set where the ground truth will come.
+    tscv
+        A splitter that returns `train_index` and `test_index`
+    col
+        Will be used as key for scores.
+    w: int
+        Lookback window
+    h: int
+        Forecast horizon
+
+    Returns
+    -------
+    methods: dict
+        Updated dict containing RMSE scores.
+
+    """
+    for method, model in methods.items():
+        for train_index, test_index in tscv.split(X):
+            X_train = X.iloc[train_index]
+            X_test = XOG.iloc[train_index].iloc[-w:]
+            y_test = XOG.iloc[test_index]
+            if model['meta'] in ['stat', 'base']:
+                y_pred = model['model'].fit(X_train).forecast(h)
+            if model['meta'] in ['ml_recursive']:
+                model['model'].fit(None, X_train)
+                clear_output()
+                y_pred = model['model'].predict(X_test).squeeze()
+            if model['meta'] in ['ml_direct']:
+                X_train, _, y_train, _ = TimeseriesGenerator(
+                    X=X_train,
+                    y=None,
+                    w=w,
+                    h=h)
+                model['model'].fit(X_train, y_train)
+                y_pred = model['model'].predict([X_test]).squeeze()
+            methods[method].setdefault(col, []).append(
+                rmse(np.array(y_test), y_pred))
+    return methods
+
+
+###############
+## Ensembles ##
+###############
+
 def forecastUsingConfig(est, regions, design_set, test_set):
     forecast = {}
     for region in regions:
@@ -376,10 +446,6 @@ def forecastUsingConfig(est, regions, design_set, test_set):
     forecast_set.index = test_set.index
     return forecast_set
 
-
-###############
-## Ensembles ##
-###############
 
 class ensemble1:
     def __init__(self, w, s):
