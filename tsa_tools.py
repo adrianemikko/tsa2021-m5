@@ -137,7 +137,7 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
         
         # Test and Train Split
         train = orig.iloc[ :1913,]
-        test = orig.iloc[ 1913:,]
+        test = orig.iloc[1913:,]
         
         # Initialize res dictionary by column
         res_bycol = {} 
@@ -173,7 +173,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
         Nested dictionary of RMSSEs per time series per level
     """
     levels = json.loads(open('levels.json', 'r').read())
-    lvl_preds = list(levels1.keys())[9:]
+    lvl_preds = list(levels.keys())[9:]
     ldf_pred_tot = df_pred.sum(axis=1)
     
     if approach == 'AHP':
