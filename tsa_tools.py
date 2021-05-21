@@ -128,11 +128,11 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
     lvl_preds = list(sorted(range(2, lvl_pred), reverse=True))
     for x in list(sorted(range(1, lvl_pred), reverse=True)):
         if x in lvl_preds:
-            orig = df_orig.sum(level=[levels1[str(x)]], axis=1)
-            pred = df_pred.sum(level=[levels1[str(x)]], axis=1)
+            orig = df_orig.sum(level=[levels[str(x)]], axis=1)
+            pred = df_pred.sum(level=[levels[str(x)]], axis=1)
         else:
-            orig = df_orig.sum(level=levels1[str(x)], axis=1)
-            pred = df_pred.sum(level=levels1[str(x)], axis=1)
+            orig = df_orig.sum(level=levels[str(x)], axis=1)
+            pred = df_pred.sum(level=levels[str(x)], axis=1)
         
         # Test and Train Split
         train = orig.iloc[ :1913,]
@@ -184,7 +184,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
             next_lvl_forc = {}
             res_bycol = {}
 
-            lvl = full_df.sum(level=levels1[x], axis=1)
+            lvl = full_df.sum(level=levels[x], axis=1)
 
             # Test and Train Split
             train = lvl.iloc[ :1913,]
