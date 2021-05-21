@@ -124,6 +124,7 @@ def compute_bottomup(df_orig, df_pred, lvl_pred):
         Nested dictionary of RMSSEs per time series per level
     """
 
+    levels = json.loads(open('levels.json', 'r').read())
     res_bylvl = {}
     lvl_preds = list(sorted(range(2, lvl_pred), reverse=True))
     for x in list(sorted(range(1, lvl_pred), reverse=True)):
@@ -171,7 +172,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
     res_bylvl : DataFrame
         Nested dictionary of RMSSEs per time series per level
     """
-    levels1 = json.loads(open('levels1.json', 'r').read())
+    levels = json.loads(open('levels.json', 'r').read())
     lvl_preds = list(levels1.keys())[9:]
     ldf_pred_tot = df_pred.sum(axis=1)
     
