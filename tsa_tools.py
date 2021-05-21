@@ -50,6 +50,18 @@ pd.set_option('precision', 4)
 ###############
 ## Functions ##
 ###############
+def score_reveal(methods: dict) -> DataFrame:
+    return (
+        pd.DataFrame({
+            method: {
+                col: np.mean(score_list)
+                for col, score_list
+                in info.items()
+                if col not in ['meta', 'model']
+            }
+            for method, info
+            in methods.items()
+        }))
 
 
 def mslt(ts, s=[12], plot=False):
@@ -421,6 +433,19 @@ def evaluate_methods(
                     h=h)
                 model['model'].fit(X_train, y_train)
                 y_pred = model['model'].predict([X_test]).squeeze()
+            if model['meta'] in ['combo']:
+                model['model'][0].fit(None, X_train)
+                clear_output()
+                y_pred1 = model['model'][0].predict(X_test).squeeze()
+
+                X_train, _, y_train, _ = TimeseriesGenerator(
+                    X=X_train,
+                    y=None,
+                    w=w,
+                    h=h)
+                model['model'][1].fit(X_train, y_train)
+                y_pred2 = model['model'][1].predict([X_test]).squeeze()
+                y_pred = (y_pred2 + y_pred1) / 2
             methods[method].setdefault(col, []).append(
                 rmse(np.array(y_test), y_pred))
     return methods
@@ -482,3 +507,69 @@ class ensemble1:
             resid.extend(f)
         return pd.DataFrame(forecasts).assign(
             Data=lambda x: np.nansum(x, axis=1))
+
+
+class ensemble2:
+    def __init__(self, col_assignment: dict, methods: dict, h: int, w: int) -> None:
+        self.methods = methods
+        self.col_assignment = col_assignment
+        self.h = h
+        self.w = w
+
+    def fit(self, df_train: DataFrame):
+        """Lazy fit."""
+        self.df_train = df_train
+        # for label, content in df_train.items():
+        # X_train = content
+        # model_name = self.col_assignment[label]
+        # model = self.methods[model_name].copy()
+        # if model['meta'] in ['stat', 'base']:
+        #     self.fits[label] = model['model'].fit(X_train)
+        # if model['meta'] in ['ml_recursive']:
+        #     self.fits[label] = model['model'].fit(None, X_train)
+        # if model['meta'] in ['ml_direct']:
+        #     X_train, _, y_train, _ = TimeseriesGenerator(
+        #         X=X_train,
+        #         y=None,
+        #         w=self.w,
+        #         h=self.h)
+        #     self.fits[label] = model['model'].fit(X_train, y_train)
+        # clear_output()
+
+    def predict(self, df_test: DataFrame):
+        df_train = self.df_train
+        res = {}
+        for label in df_test:
+            X_train = df_train[label]
+            X_test = df_test[label].iloc[-self.w:]
+            model_name = self.col_assignment[label]
+            model = self.methods[model_name]
+            if model['meta'] in ['stat', 'base']:
+                y_pred = model['model'].fit(X_train).forecast(self.h)
+            if model['meta'] in ['ml_recursive']:
+                model['model'].fit(None, X_train)
+                clear_output()
+                y_pred = model['model'].predict(X_test).squeeze()
+            if model['meta'] in ['ml_direct']:
+                X_train, _, y_train, _ = TimeseriesGenerator(
+                    X=X_train,
+                    y=None,
+                    w=self.w,
+                    h=self.h)
+                model['model'].fit(X_train, y_train)
+                y_pred = model['model'].predict([X_test]).squeeze()
+            if model['meta'] in ['combo']:
+                model['model'][0].fit(None, X_train)
+                clear_output()
+                y_pred1 = model['model'][0].predict(X_test).squeeze()
+
+                X_train, _, y_train, _ = TimeseriesGenerator(
+                    X=X_train,
+                    y=None,
+                    w=self.w,
+                    h=self.h)
+                model['model'][1].fit(X_train, y_train)
+                y_pred2 = model['model'][1].predict([X_test]).squeeze()
+                y_pred = (y_pred2 + y_pred1) / 2
+            res[label] = np.array(y_pred)
+        return pd.DataFrame(res)
