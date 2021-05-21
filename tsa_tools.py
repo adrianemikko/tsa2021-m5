@@ -192,7 +192,7 @@ def compute_topdown(df_full, df_pred, lvl_pred, approach='AHP'):
      
             for col in tqdm.tqdm(lvl.columns.tolist()):
                 propors[col] = sum(lvl[col]/lvl.sum(axis=1)) * (1/len(lvl))
-                next_lvl_forc[col] = ldf_pred_tot * propors[col])
+                next_lvl_forc[col] = ldf_pred_tot * propors[col]
                 res_bycol[col] = (rmsse(test[col], 
                                   next_lvl_forc[col], 
                                   train[col]))
