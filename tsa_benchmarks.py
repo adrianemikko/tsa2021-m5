@@ -1,6 +1,7 @@
 ########################################
 ##             Benchmarks             ##
 ########################################
+from pandas.core.series import Series
 import numpy as np
 
 
@@ -17,6 +18,10 @@ def naivef(ts, h):
 
 
 def snaivef(ts, h, m):
+    try:
+        ts = ts.values if isinstance(ts, Series) else ts
+    else:
+        pass
     f = np.zeros(h)
     for i in range(h):
         f[i] = ts[-(m - i % m)]
