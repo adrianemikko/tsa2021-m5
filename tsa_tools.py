@@ -319,17 +319,37 @@ def cross_val_predict(X, est, config, cv):
 
 
 class OverlappingTimeSeriesSplit:
-    def __init__(self, val_size):
-        self.val_size = val_size
+    """
+    Creates overlapping timeseries splits of the dataset for use in 
+    cross validation.
 
-    def split(self, design_set, h):
+    Can be used to return only the index for operations that require
+    only the indices.
+    Usage:
+    >>> tscv = OverlappingTimeSeriesSplit(val_size=39, h=35, return_type='index')
+    >>> tscv.split(train[col])
+    
+    This returns six splits of the data given 40 available observations
+    for cross validation and horizon of 35 given by:
+    >>> splits = val_size - h + 1
+    """
+    def __init__(self, val_size, h, return_type='value'):
+        self.val_size = val_size
+        self.return_type = return_type
+        self.h = h
+
+    def split(self, design_set, h=None):
+        h = h if h else self.h
         val_end = len(design_set)
         divider = val_end - h
         dataset = []
         while len(design_set) - divider <= self.val_size:
             dataset.append(
+                (np.arange(0, divider), np.arange(divider, val_end))
+                if self.return_type == 'index' else
                 (design_set[np.arange(0, divider)],
-                 design_set[np.arange(divider, val_end)]))
+                 design_set[np.arange(divider, val_end)])
+            )
             val_end -= 1
             divider -= 1
         return dataset[::-1]
@@ -380,7 +400,8 @@ def evaluate_methods(
         tscv,
         col,
         w: int,
-        h: int) -> dict:
+        h: int, 
+        scoring=rmse) -> dict:
     """
     Evaluates the different forecasting methods defined in a dict:
     >>> methods = {
@@ -447,7 +468,7 @@ def evaluate_methods(
                 y_pred2 = model['model'][1].predict([X_test]).squeeze()
                 y_pred = (y_pred2 + y_pred1) / 2
             methods[method].setdefault(col, []).append(
-                rmse(np.array(y_test), y_pred))
+                scoring(np.array(y_test), y_pred))
     return methods
 
 
